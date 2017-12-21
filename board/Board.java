@@ -9,39 +9,29 @@ import actors.EmptySpace;
 import actors.Placeable;
 import actors.Unit;
 import actors.Wall;
+import java.io.Serializable;
+import java.util.ArrayList;
 import utils.User;
 
 /**
  *
  * @author ninja
  */
-public class Board {
+public class Board implements Serializable{
     private Placeable[][] gameBoard;
-    private User[] players;
-    private int numRows;
-    private int numCols;
+    private ArrayList<User> players;
+    private final int numRows;
+    private final int numCols;
     
-    public Board()
+    public Board(ArrayList<User> players)
     {
-        this.numRows = 21;
-        this.numCols = 21;
+        this.numRows = 22;
+        this.numCols = 22;
         initBoard(21,21);
-        players = new User[2];
-        players[0] = new User();
-        players[1] = new User();
+        this.players = players;
     }
     
-    public Board(int rows, int cols)
-    {
-        this.numCols = cols;
-        this.numRows = rows;
-        initBoard(rows,cols);
-        players = new User[2];
-        players[0] = new User();
-        players[1] = new User();
-    }
-    
-    public Board(int rows, int cols, User[] players)
+    public Board(int rows, int cols, ArrayList<User> players)
     {
         this.numCols = cols;
         this.numRows = rows;
@@ -51,11 +41,12 @@ public class Board {
     
     private void initBoard(int rows, int cols)
     {
+        gameBoard = new Placeable[rows][cols];
         for (int row = 0; row<rows;row++)
         {
             for (int col = 0;col<cols;col++)
             {
-                if(row==0||row==20||col==0||col==20)
+                if(row==0||row==rows-1||col==0||col==cols-1)
                 {
                     gameBoard[row][col] = new Wall();
                     gameBoard[row][col].setPosition(row,col);
@@ -69,7 +60,7 @@ public class Board {
         }
     }
     
-    public User[] getPlayers()
+    public ArrayList<User> getPlayers()
     {
         return players;
     }
@@ -112,5 +103,20 @@ public class Board {
     public char getTokenAt(int row, int col)
     {
         return gameBoard[row][col].getToken();
+    }
+    
+    public void removePlayer(User toRemove)
+    {
+        players.remove(toRemove);
+    }
+    
+    public boolean onePlayerLeft()
+    {
+        return players.size()==1;
+    }
+    
+    public User getLastManStanding()
+    {
+        return players.get(0);
     }
 }
