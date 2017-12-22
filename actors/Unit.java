@@ -30,4 +30,7 @@ public interface Unit extends Placeable{
     public void stunMe();
     public void unStunMe();
     public String getUnitType();
+    public int getCurrHP();
+    public void levelUp();
+    
 }

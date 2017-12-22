@@ -142,6 +142,16 @@ public class User implements Serializable{
         this.barracks = barracks;
     }
     
+    public void removeUnitBarracks(Unit u)
+    {
+        this.barracks.remove(u);
+    }
+    
+    public void addUnitBarracks(Unit u)
+    {
+        this.barracks.add(u);
+    }
+    
     @Override
     public boolean equals(Object o)
     {

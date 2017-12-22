@@ -39,40 +39,11 @@ public class IOPort {
     {
         try
         {
-            if (new File("resources").exists())
-            {
-                System.out.println("Resources exists.");
-            }
-            else
-            {
-                if (new File("resources").mkdir())
-                {
-                    System.out.println("Creating directories.");
-                }
-                else 
-                {
-                    System.out.println("Failed to make dir");
-                }
-            }
             ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(new File("resources/users.bin")));
             ArrayList<User> existing = readUsers();
-            ArrayList<User> toSave = new ArrayList<>();
-            for (User u : users)
-            {
-                if (!existing.contains(u)) //Save new users
-                {
-                    toSave.add(u);
-                }
-                else
-                {
-                    existing.remove(u);
-                }
-            }
-            for (User u : existing)
-            {
-                toSave.add(u);
-            }
-            out.writeObject(toSave);
+            existing.removeAll(users);
+            existing.addAll(users);
+            out.writeObject(existing);
         }
         catch (NotSerializableException e)
         {
@@ -95,6 +66,10 @@ public class IOPort {
         {
             ObjectInputStream in = new ObjectInputStream(new FileInputStream(new File("resources/users.bin")));
             toReturn = (ArrayList<User>)in.readObject();
+        }
+        catch (EOFException e)
+        {
+            //Do nothing
         }
         catch(IOException e)
         {

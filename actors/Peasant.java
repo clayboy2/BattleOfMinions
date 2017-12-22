@@ -32,6 +32,11 @@ public class Peasant extends AbstractPlaceable implements Unit{
         isStunned = false;
     }
     
+    public Peasant(int UID)
+    {
+        super("Bob Farmer", 5, 'P',UID);
+    }
+    
     //Named peasant
     public Peasant(String name)
     {
@@ -71,21 +76,21 @@ public class Peasant extends AbstractPlaceable implements Unit{
     //Does damage
     @Override
     public int doDamage() {
-        return Utils.makeRoll(3) + 1;
+        return Utils.makeRoll(3,0) + 1 + super.getDefenseBuff();
     }
     
     //Makes a defense check
     @Override
     public int makeDefense()
     {
-        return Utils.makeRoll(3);
+        return Utils.makeRoll(3,0) + super.getDefenseBuff();
     }
     
     //Makes an attack roll
     @Override
     public int makeAttack()
     {
-        return Utils.makeRoll(3);
+        return Utils.makeRoll(3,0)+super.getAttackBuff();
     }
 
     @Override
@@ -108,5 +113,11 @@ public class Peasant extends AbstractPlaceable implements Unit{
     @Override
     public String getUnitType() {
         return "Peasant";
+    }
+    
+    @Override
+    public void levelUp()
+    {
+        
     }
 }

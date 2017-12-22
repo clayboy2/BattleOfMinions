@@ -16,9 +16,11 @@
 package battleofminions;
 
 import actors.AbstractPlaceable;
+import actors.Archer;
 import actors.Peasant;
 import actors.Placeable;
 import actors.Unit;
+import actors.Wizard;
 import board.Board;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -35,81 +37,63 @@ import utils.User;
 
 /**
  * The default method of playing the game
+ *
  * @author Austen Clay
  */
 public class SimpleMode {
+
     public static ArrayList<Unit> friendlyFireKills;
+
     //Runs the game with the given args
-    public void runGame(ArrayList<User> users)
-    {
+    public void runGame(ArrayList<User> users) {
         friendlyFireKills = new ArrayList<>();
-        Board b = new Board(22,22,users);
+        Board b = new Board(22, 22, users);
         ArrayList<Integer> directionsUsed = new ArrayList<>();
-        for (User u : users)
-        {
-            while (true)
-            {
-                System.out.println(u.getName()+" is selecting units.");
+        for (User u : users) {
+            while (true) {
+                System.out.println(u.getName() + " is selecting units.");
                 boolean successful = true;
-                int direction = (int)(Math.random()*4);
-                for (Integer i : directionsUsed)
-                {
-                    if (direction == i)
-                    {
+                int direction = (int) (Math.random() * 4);
+                for (Integer i : directionsUsed) {
+                    if (direction == i) {
                         successful = false;
                         break;
                     }
                 }
-                if (successful)
-                {
+                if (successful) {
                     directionsUsed.add(direction);
-                    if (u.getBarracks().isEmpty())
-                    {
-                        u.setControlGroup(Utils.randomPlacement(b, direction,(u.getName().equals("A.I. Opponent"))));
-                    }
-                    else
-                    {
+                    if (u.getBarracks().isEmpty()) {
+                        u.setControlGroup(Utils.randomPlacement(b, direction, (u.getName().equals("A.I. Opponent"))));
+                    } else {
                         ArrayList<Unit> currentBarracks = u.getBarracks();
                         ArrayList<Unit> controlGroup = new ArrayList<>();
                         System.out.println("Use saved units?");
                         Scanner keys = new Scanner(System.in);
-                        if (keys.nextLine().toLowerCase().equals("yes"))
-                        {
-                            if (currentBarracks.size()<5)
-                            {
+                        if (keys.nextLine().toLowerCase().equals("yes")) {
+                            if (currentBarracks.size() < 5) {
                                 System.out.println("Filling with Peasants...");
-                                while (currentBarracks.size()<5)
-                                {
+                                while (currentBarracks.size() < 5) {
                                     System.out.println("Enter a name: ");
                                     Unit tempUnit = new Peasant(keys.nextLine());
                                     currentBarracks.add(tempUnit);
                                 }
                                 u.setControlGroup(currentBarracks);
-                            }
-                            else if (currentBarracks.size()==5)
-                            {
-                                for (Unit tempUnit : currentBarracks)
-                                {
+                            } else if (currentBarracks.size() == 5) {
+                                for (Unit tempUnit : currentBarracks) {
                                     controlGroup.add(tempUnit);
                                 }
                                 u.setControlGroup(controlGroup);
-                            }
-                            else
-                            {
+                            } else {
                                 System.out.println("You have the following units: ");
-                                for (Unit currentUnit : currentBarracks)
-                                {
-                                    System.out.println(currentUnit.getName()+"|ID: "+currentUnit.hashCode()+"|Class: "+currentUnit.getUnitType());
+                                for (Unit currentUnit : currentBarracks) {
+                                    System.out.println(currentUnit.getName() + "|ID: " + currentUnit.hashCode() + "|Class: " + currentUnit.getUnitType());
                                 }
-                                while(controlGroup.size() < 5)
-                                {
+                                while (controlGroup.size() < 5) {
                                     System.out.println("Enter the ID of the Units to use:");
                                     String choice = keys.nextLine();
                                     int id = Integer.parseInt(choice);
-                                    for (Unit currentUnit : currentBarracks)
-                                    {
-                                        if (currentUnit.hashCode()==id)
-                                        {
+                                    for (Unit currentUnit : currentBarracks) {
+                                        if (currentUnit.hashCode() == id) {
                                             controlGroup.add(currentUnit);
                                         }
                                     }
@@ -118,9 +102,7 @@ public class SimpleMode {
                             }
                             currentBarracks.removeAll(controlGroup);
                             Utils.randomPlacement(b, u.getControlGroup(), direction);
-                        }
-                        else
-                        {
+                        } else {
                             u.setControlGroup(Utils.randomPlacement(b, direction, (u.getName().equals("A.I. Opponent"))));
                         }
                     }
@@ -133,174 +115,202 @@ public class SimpleMode {
         out.textOutput(b, new Peasant());
         gameLoop(b);
     }
-    
+
     //Main game loop
-    private void gameLoop(Board b)
-    {
+    private void gameLoop(Board b) {
         Scanner keys = new Scanner(System.in);
         ArrayList<User> toRemove = new ArrayList<>();
         ArrayList<User> toSave = new ArrayList<>();
-        ArrayList<Unit> tkUnits = new ArrayList<>();
-        while (true)
-        {
+        while (true) {
             SimpleOutput display = new SimpleOutput();
-            for (User currentUser : b.getPlayers())
-            {
+            for (User currentUser : b.getPlayers()) {
                 currentUser.startNewTurn();
-                System.out.println("It is " + currentUser.getName()+"'s turn.");
-                for (Unit currentUnit : currentUser.getControlGroup())
-                {
-                    display.textOutput(b, currentUnit);
-                    boolean breakLoop = false;
-                    System.out.println("Enter an action for "+currentUnit.getName());
-                    int code = -1;
-                    try
-                    {
-                        switch(keys.nextLine().toLowerCase())
+                System.out.println("It is " + currentUser.getName() + "'s turn.");
+                for (Unit currentUnit : currentUser.getControlGroup()) {
+                    System.out.println(currentUnit.getName()+" has "+currentUnit.getCurrHP()+" HP left.");
+                    while (currentUnit.hasTurn()) {
+                        if (currentUnit.isStunned())
                         {
-                            case "move":
-                                System.out.println("Please enter wsad for movement");
-                                code = Action.move(currentUnit, keys.nextLine().toLowerCase().charAt(0));
+                            currentUnit.unStunMe();
+                            break;
+                        }
+                        display.textOutput(b, currentUnit);
+                        System.out.println("Enter an action for " + currentUnit.getName());
+                        int code = -1;
+                        try {
+                            switch (keys.nextLine().toLowerCase()) {
+                                case "skip":
+                                    while (currentUnit.hasTurn())
+                                    {
+                                        currentUnit.takeTurn();
+                                    }
+                                    break;
+                                case "move":
+                                    System.out.println("Please enter wsad for movement");
+                                    code = Action.move(currentUnit, keys.nextLine().toLowerCase().charAt(0));
+                                    break;
+                                case "attack":
+                                    System.out.println("Please enter wsad for attack");
+                                    if (currentUnit.getUnitType().equals("Archer"))
+                                    {
+                                        code = Action.rangedAttack(currentUnit, keys.nextLine().toLowerCase().charAt(0));
+                                    }
+                                    else
+                                    {
+                                        code = Action.attack(currentUnit, keys.nextLine().toLowerCase().charAt(0));
+                                    }
+                                    if (code == Action.ExitCodes.MISSED_TARGET) {
+                                        System.out.println(LastAttack.attacker + " missed " + LastAttack.defender);
+                                    } else {
+                                        System.out.println(LastAttack.attacker + " did " + LastAttack.damageDone + " to " + LastAttack.defender);
+                                    }
+                                    break;
+                                case "moveall":
+                                    System.out.println("Please enter wsad for movement all");
+                                    code = Action.moveall(currentUser, keys.nextLine().toLowerCase().charAt(0));
+                                    break;
+                                case "exit":
+                                    System.out.println("Exiting game");
+                                    System.exit(0);
+                                    break;
+                                case "cast spell":
+                                    if (currentUnit instanceof Wizard)
+                                    {
+                                        System.out.println("Please enter a spell");
+                                        String toCast = keys.nextLine().toLowerCase();
+                                        System.out.println("Enter a stat, or amount of spell points to burn.");
+                                        String type = keys.nextLine();
+                                        for (User spellUser : b.getPlayers())
+                                        {
+                                            for (Unit spellUnit : spellUser.getControlGroup())
+                                            {
+                                                System.out.println("Name: "+spellUnit.getName()+"| Class: "+spellUnit.getUnitType()+"| ID: "+spellUnit.hashCode());
+                                            }
+                                        }
+                                        System.out.println("Select a target by ID: ");
+                                        int targetID = Integer.parseInt(keys.nextLine());
+                                        Placeable target = null;
+                                        for (User spellUser: b.getPlayers())
+                                        {
+                                            for (Unit spellUnit : spellUser.getControlGroup())
+                                            {
+                                                if (targetID == spellUnit.hashCode())
+                                                {
+                                                    target = (Placeable)spellUnit;
+                                                }
+                                            }
+                                        }
+                                        if (target == null)
+                                        {
+                                            System.out.println("Your spell doesn't work...");
+                                            break;
+                                        }
+                                        Wizard w = (Wizard)currentUnit;
+                                        w.castSpell(toCast, target, type);
+                                    }
+                                    else
+                                    {
+                                        System.out.println(currentUnit.getName()+" has not mastered the arcane arts.");
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        } catch (Exception e) {
+                            code = -2;
+                        }
+                        switch (code) {
+                            case Action.ExitCodes.INVALID_TARGET:
+                                System.out.println("INVALID_TARGET");
                                 break;
-                            case "attack":
-                                System.out.println("Please enter wsad for attack");
-                                code = Action.attack(currentUnit,keys.nextLine().toLowerCase().charAt(0));
-                                if (code == Action.ExitCodes.MISSED_TARGET)
-                                {
-                                    System.out.println(LastAttack.attacker+" missed "+LastAttack.defender);
-                                }
-                                else
-                                {
-                                    System.out.println(LastAttack.attacker+" did "+LastAttack.damageDone+" to "+LastAttack.defender);
-                                }
+                            case Action.ExitCodes.ERR_TARGET_IS_OCCUPIED:
+                                System.out.println("ERR_TARGET_IS_OCCUPIED");
                                 break;
-                            case "moveall":
-                                breakLoop = true;
-                                System.out.println("Please enter wsad for movement all");
-                                code = Action.moveall(currentUser, keys.nextLine().toLowerCase().charAt(0));
+                            case Action.ExitCodes.ERR_TARGET_IS_WALL:
+                                System.out.println("ERR_TARGET_IS_WALL");
                                 break;
-                            case "exit":
-                                System.out.println("Exiting game");
-                                System.exit(0);
+                            case Action.ExitCodes.MULTIPLE_ERRORS:
+                                System.out.println("MULTIPLE_ERRORS");
+                                break;
+                            case Action.ExitCodes.SUCCESSFUL:
+                                System.out.println("SUCCESSFUL");
+                                break;
+                            case Action.ExitCodes.TARGET_IS_DEAD:
+                                System.out.println(LastAttack.defender + " has died.");
+                                break;
+                            case -2:
+                                System.out.println("Exception thrown");
                                 break;
                             default:
-                                break; 
+                                System.out.println("Some other error has occoured");
                         }
                     }
-                    catch(Exception e)
-                    {
-                        code = -2;
-                    }
-                    switch(code)
-                    {
-                        case Action.ExitCodes.INVALID_TARGET:
-                            System.out.println("INVALID_TARGET");
-                            break;
-                        case Action.ExitCodes.ERR_TARGET_IS_OCCUPIED:
-                            System.out.println("ERR_TARGET_IS_OCCUPIED");
-                            break;
-                        case Action.ExitCodes.ERR_TARGET_IS_WALL:
-                            System.out.println("ERR_TARGET_IS_WALL");
-                            break;
-                        case Action.ExitCodes.MULTIPLE_ERRORS:
-                            System.out.println("MULTIPLE_ERRORS");
-                            break;
-                        case Action.ExitCodes.SUCCESSFUL:
-                            System.out.println("SUCCESSFUL");
-                            break;
-                        case Action.ExitCodes.TARGET_IS_DEAD:
-                            System.out.println(LastAttack.defender+" has died.");
-                        default:
-                            System.out.println("Some other error has occoured");
-                    }
-                    if (breakLoop)
-                    {
-                        break;
-                    }
                 }
-                if (!SimpleMode.friendlyFireKills.isEmpty())
-                {
-                    for (Unit u : friendlyFireKills)
-                    {
+                if (!SimpleMode.friendlyFireKills.isEmpty()) {
+                    for (Unit u : friendlyFireKills) {
                         currentUser.getControlGroup().remove(u);
                     }
                 }
-                if (currentUser.outOfUnits())
-                {
+                if (currentUser.outOfUnits()) {
                     toRemove.add(currentUser);
                 }
                 LastAttack.reset();
             }
-            if (!toRemove.isEmpty())
-            {
-                for (User u : toRemove)
-                {
+            if (!toRemove.isEmpty()) {
+                for (User u : toRemove) {
                     toSave.add(u);
                     b.getPlayers().remove(u);
                 }
             }
-            if (b.getPlayers().isEmpty())
-            {
+            if (b.getPlayers().isEmpty()) {
                 System.out.println("Tie Game!");
                 break;
-            }
-            else if (b.getPlayers().size()==1)
-            {
-                for (User u : b.getPlayers())
-                {
-                    System.out.println(u.getName()+" wins!");
+            } else if (b.getPlayers().size() == 1) {
+                for (User u : b.getPlayers()) {
+                    System.out.println(u.getName() + " wins!");
+                    for (Unit levelMe : u.getControlGroup())
+                    {
+                        levelMe.levelUp();
+                    }
                 }
-                toSave.add(b.getPlayers().get(0));
+                toSave.addAll(b.getPlayers());
                 b.getPlayers().remove(0);
                 break;
             }
         }
-        for (User u : toSave)
-        {
+        for (User u : toSave) {
             u.saveUnits();
         }
         IOPort.writeUsers(toSave);
     }
-    
+
     //Inner class with input tools
-    private class SimpleInput
-    {
-        
+    private class SimpleInput {
+
     }
-    
+
     //Inner class that displays the game state
-    private class SimpleOutput
-    {    
+    private class SimpleOutput {
+
         //Prints the game state to the console.
-        public void textOutput(Board b,Unit u)
-        {
+        public void textOutput(Board b, Unit u) {
             AnsiConsole.systemInstall();
             ArrayList<User> players = b.getPlayers();
             Placeable[][] gameBoard = b.getBoard();
-            for (int row = 0; row<b.getRows();row++)
-            {
-                for (int col = 0; col<b.getCols();col++)
-                {
-                    if (gameBoard[row][col] instanceof Unit)
-                    {
+            for (int row = 0; row < b.getRows(); row++) {
+                for (int col = 0; col < b.getCols(); col++) {
+                    if (gameBoard[row][col] instanceof Unit) {
                         char token = gameBoard[row][col].getToken();
-                        if (gameBoard[row][col].equals(u))
-                        {
-                            AnsiConsole.out.print(new Ansi().render("@|green "+gameBoard[row][col].getToken()+"|@"));
-                        }
-                        else 
-                        {
-                            for (User user : b.getPlayers())
-                            {
-                                if (user.belongsToMe((AbstractPlaceable)gameBoard[row][col]))
-                                {
-                                    AnsiConsole.out.print(new Ansi().render("@|"+user.getColor()+" "+token+"|@"));
+                        if (gameBoard[row][col].equals(u)) {
+                            AnsiConsole.out.print(new Ansi().render("@|green " + gameBoard[row][col].getToken() + "|@"));
+                        } else {
+                            for (User user : b.getPlayers()) {
+                                if (user.belongsToMe((AbstractPlaceable) gameBoard[row][col])) {
+                                    AnsiConsole.out.print(new Ansi().render("@|" + user.getColor() + " " + token + "|@"));
                                 }
                             }
                         }
-                    }
-                    else
-                    {
+                    } else {
                         System.out.print(gameBoard[row][col].getToken());
                     }
                 }

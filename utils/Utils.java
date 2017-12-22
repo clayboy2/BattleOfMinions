@@ -34,7 +34,7 @@ public class Utils {
     public static final int WEST = 3;
     
     //Makes a roll with the specified upper bound
-    public static int makeRoll(int upperBound)
+    public static int makeRoll(int upperBound,int lowerBound)
     {
         int toReturn = 0;
         for (int i = 0;i<upperBound;i++)
@@ -42,7 +42,7 @@ public class Utils {
             if ((int)((Math.random()*4)+1)==1)
                 toReturn++;
         }
-        return toReturn;
+        return toReturn + lowerBound;
     }
     
     //Randomly places units on the board

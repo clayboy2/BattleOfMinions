@@ -26,14 +26,17 @@ import utils.IOPort;
 public abstract class AbstractPlaceable implements Placeable,Serializable{
     
     //Class variables
-    private final int maxHP;
+    private int maxHP;
     private int currHP;
     private final String name;
     private int myRow;
     private int myCol;
     private final char token;
     private final int myUID;
-    private static int globalUID;
+    private int defenseBuff;
+    private int attackBuff;
+    private int damageBuff;
+    private int myLevel;
     
     //This is the 'default' constructor.
     public AbstractPlaceable(String name, int maxHP,char token)
@@ -50,6 +53,7 @@ public abstract class AbstractPlaceable implements Placeable,Serializable{
         {
             this.myUID = -1;
         }
+        myLevel = 0;
     }
     
     public AbstractPlaceable(String name, int maxHP, char token, int uid)
@@ -59,6 +63,7 @@ public abstract class AbstractPlaceable implements Placeable,Serializable{
         this.currHP = maxHP;
         this.token = token;
         this.myUID = uid;
+        myLevel = 0;
     }
     
     //Gets this placeables row number
@@ -94,7 +99,6 @@ public abstract class AbstractPlaceable implements Placeable,Serializable{
     {
         return maxHP;
     }
-    
     
     //Returns the currentHP
     public int getCurrHP()
@@ -191,5 +195,46 @@ public abstract class AbstractPlaceable implements Placeable,Serializable{
     public int getUID()
     {
         return this.myUID;
+    }
+    
+    public void setDamageBuff(int amount)
+    {
+        this.damageBuff = amount;
+    }
+    
+    public void setAttackBuff(int amount)
+    {
+        this.attackBuff = amount;
+    }
+    
+    public void setDefenseBuff(int amount)
+    {
+        this.defenseBuff = amount;
+    }
+    
+    public int getDamageBuff()
+    {
+        return damageBuff;
+    }
+    
+    public int getAttackBuff()
+    {
+        return attackBuff;
+    }
+    
+    public int getDefenseBuff()
+    {
+        return defenseBuff;
+    }
+    
+    public void levelUp(int hpBump)
+    {
+        this.maxHP+=hpBump;
+        myLevel++;
+    }
+    
+    public int getLevel()
+    {
+        return myLevel;
     }
 }

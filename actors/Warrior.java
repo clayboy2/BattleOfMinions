@@ -24,35 +24,51 @@ import utils.Utils;
 public class Warrior extends AbstractPlaceable implements Unit{
     private boolean hasTurn;
     private boolean isStunned;
+    private int upperBound;
+    private int lowerBound;
 
     public Warrior()
     {
         super("Dave",10,'W');
+        upperBound = 6;
+        lowerBound = 0;
     }
     public Warrior(String name, int maxHP) {
         super(name, maxHP, 'W');
+        upperBound = 6;
+        lowerBound = 0;
     }
     
     public Warrior(String name)
     {
         super(name, 10,'W');
+        upperBound = 6;
+        lowerBound = 0;
     }
     
     public Warrior(String name, int maxHP, int UID)
     {
         super(name,maxHP,'W',UID);
+        upperBound = 6;
+        lowerBound = 0;
     }
     
     @Override
     public int doDamage() {
-        return Utils.makeRoll(6) + 2;
+        return Utils.makeRoll(upperBound, lowerBound) + 1 +super.getDamageBuff();
     }
 
     @Override
     public int makeAttack() {
-        return 100;
+        return 100+getAttackBuff();
     }
-
+    
+    @Override
+    public int makeDefense()
+    {
+        return Utils.makeRoll(upperBound,lowerBound)+super.getDefenseBuff();
+    }
+    
     @Override
     public boolean hasTurn() {
         return hasTurn;
@@ -92,5 +108,12 @@ public class Warrior extends AbstractPlaceable implements Unit{
     @Override
     public String getUnitType() {
         return "Warrior";
+    }
+
+    @Override
+    public void levelUp() {
+        super.levelUp(3);
+        upperBound++;
+        lowerBound++;
     }
 }

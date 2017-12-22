@@ -5,10 +5,14 @@
  */
 package battleofminions;
 
+import actors.AbstractPlaceable;
+import actors.Archer;
 import actors.Peasant;
 import actors.Placeable;
 import actors.Unit;
 import actors.Warrior;
+import actors.Wizard;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -68,26 +72,12 @@ public class BattleOfMinions {
                         {
                             if (user.equals(toCheck))
                             {
+                                System.out.println("Viewing "+name);
                                 users.add(user);
                             }
                         }
                     }
                     BattleOfMinions.userPrefs(users);
-                    System.exit(0);
-                case "view":
-                    argsList.remove(0);
-                    for (String name : argsList)
-                    {
-                        User toCheck = new User(name);
-                        for (User user : existingUsers)
-                        {
-                            if (user.equals(toCheck))
-                            {
-                                users.add(user);
-                            }
-                        }
-                    }
-                    BattleOfMinions.viewUnits(users);
                     System.exit(0);
                 case "admin":
                     runAdmin();
@@ -131,6 +121,7 @@ public class BattleOfMinions {
                 User u = new User(args[i],args[i+1]);
                 if (existingUsers.contains(u))
                 {
+                    existingUsers.get(existingUsers.indexOf(u)).setColor(args[i+1]);
                     users.add(existingUsers.get(existingUsers.indexOf(u)));
                     System.out.println("Loading existing user: "+u.getName());
                 }
@@ -178,6 +169,10 @@ public class BattleOfMinions {
                 out.close();
             }
         }
+        catch(EOFException e)
+        {
+            //Ignore
+        }
         catch(IOException e)
         {
             
@@ -220,16 +215,22 @@ public class BattleOfMinions {
         IOPort.writeUsers(users);
     }
    
-    public static void viewUnits(ArrayList<User> users)
+    public static void viewUnits(User user)
     {
-        for (User u : users)
-        {
-            System.out.println(u.getName()+" is viewing units.");
-            for (Unit unit : u.getBarracks())
+            System.out.println(user.getName()+" is viewing units.");
+            for (Unit unit : user.getBarracks())
             {
-                System.out.println("Name: "+unit.getName()+"|Class: "+unit.getUnitType());
+                System.out.println("Name: "+unit.getName());
+                System.out.println("-Class: "+unit.getUnitType());
+                System.out.println("-Level: "+((AbstractPlaceable)unit).getLevel());
+                System.out.println("-ID: "+unit.hashCode());
+                System.out.println("-HP: "+unit.getCurrHP());
+                if (unit instanceof Wizard)
+                {
+                    Wizard w = (Wizard)unit;
+                    System.out.println("-Spell Points: "+w.getSpellBook().getSpellPointMax());
+                }
             }
-        }
     }
     
     public static void runAdmin()
@@ -243,14 +244,26 @@ public class BattleOfMinions {
             {
                 System.out.println(currentUser.getName());
             }
-            String input = keys.nextLine().toLowerCase();
+            String input = keys.nextLine();
+            boolean userFound = false;
             for (User currentUser : users)
             {
                 if (currentUser.equals(new User(input)))
                 {
                     System.out.println("Modifying "+input);
                     editUser(currentUser);
+                    userFound = true;
                     break;
+                }
+            }
+            if (!userFound)
+            {
+                System.out.println("Create new user?");
+                if (keys.nextLine().toLowerCase().equals("yes"))
+                {
+                    User u = new User(input);
+                    users.add(u);
+                    editUser(u);
                 }
             }
             System.out.println("Exit?");
@@ -259,6 +272,7 @@ public class BattleOfMinions {
                 break;
             }
         }
+        IOPort.writeUsers(users);
     }
     
     public static void editUser(User toEdit)
@@ -268,7 +282,6 @@ public class BattleOfMinions {
         String input = keys.nextLine().toLowerCase();
         while (!input.equals("exit"))
         {
-            
             switch (input)
             {
                 case "add unit":
@@ -276,7 +289,7 @@ public class BattleOfMinions {
                     String name = keys.nextLine();
                     System.out.println("Enter a unit type");
                     boolean shouldBreak = false;
-                    Placeable p;
+                    Unit p = new Peasant(name);
                     while (!shouldBreak)
                     {
                         switch(keys.nextLine().toLowerCase())
@@ -289,21 +302,41 @@ public class BattleOfMinions {
                                 shouldBreak = true;
                                 p = new Warrior(name);
                                 break;
+                            case "archer":
+                                shouldBreak = true;
+                                p = new Archer(name);
+                                break;
+                            case "wizard":
+                                shouldBreak = true;
+                                p = new Wizard(name);
+                                break;
                             default:
                                 System.out.println("Type not recognized");
                                 break;
                         }
+                        
                     }
+                    toEdit.addUnitBarracks(p);
                     break;
                 case "remove unit":
-                    System.out.println("Enter the ID of the unit to replace: ");
-                    for (Unit unit : toEdit.getControlGroup())
+                    System.out.println("Enter the ID of the unit to remove: ");
+                    for (Unit unit : toEdit.getBarracks())
+                    {
+                        System.out.println("Name: "+unit.getName()+"| Class: "+unit.getUnitType()+"|ID: "+unit.hashCode());
+                    }
+                    String stringID = keys.nextLine();
+                    int id = Integer.parseInt(stringID);
+                    Placeable pID = new Peasant(id);
+                    toEdit.getBarracks().remove((Unit)pID);
                     break;
                 case "view units":
+                    viewUnits(toEdit);
                     break;
                 default:
                     break;
             }
+            System.out.println("Enter next action: ");
+            input = keys.nextLine();
         }
     }
 }
