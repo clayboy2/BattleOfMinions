@@ -15,102 +15,66 @@
  */
 package actors;
 
+import actors.wizardmagic.Summonable;
+import actors.wizardmagic.WizardWall;
 import board.Board;
 import java.io.Serializable;
 import java.util.ArrayList;
+import utils.Dice;
 import utils.Storage;
-import utils.User;
-import utils.Utils;
 
 /**
  *
  * @author austen
  */
-public class Wizard extends AbstractPlaceable implements Unit{
-    private int numTurnsLeft;
-    private final int numTurnsPerRound = 2;
-    private boolean isStunned;
+public class Wizard extends AbstractPlaceableUnit{
     private SpellBook myBook;
-    private int upperBound;
-    private int lowerBound;
+    protected ArrayList<Summonable> mySummons;
     
+    @Override
+    protected void init(int turnsPerRound, Dice attackDice, Dice defenseDice, Dice damageDice)
+    {
+        super.init(turnsPerRound, attackDice, defenseDice, damageDice);
+        myBook = new SpellBook(this);
+        mySummons = new ArrayList<>();
+    }
+    
+    private void init()
+    {
+        Dice attack = new Dice(1,6);
+        Dice defense = new Dice(1,6);
+        Dice damage = new Dice(1,4);
+        this.init(myLevel, attack, defense, damage);
+    }
     
     public Wizard()
     {
         super("Merlin", 6,'M');
-        myBook = new SpellBook();
-        upperBound = 4;
-        lowerBound = 0;
+        init();
     }
     
     public Wizard(String name)
     {
         super(name,6,'M');
-        myBook = new SpellBook();
-        upperBound = 4;
-        lowerBound = 0;
+        init();
     }
     
     public Wizard(String name, int maxHP)
     {
         super(name, maxHP,'M');
-        myBook = new SpellBook();
-        upperBound = 4;
-        lowerBound = 0;
+        init();
+    }
+    
+    public Wizard(int UID, String name)
+    {
+        super(name,6,'W',UID);
+        init();
     }
     
     public Wizard(String name, int maxHP, int UID)
     {
         super(name,maxHP,'M',UID);
-        myBook = new SpellBook();
-        upperBound = 4;
-        lowerBound = 0;
-    }
-    
-    @Override
-    public int doDamage() {
-        return Utils.makeRoll(upperBound,lowerBound) + 1 + super.getDamageBuff();
-    }
-
-    @Override
-    public int makeAttack() {
-        return Utils.makeRoll(upperBound,lowerBound) + super.getAttackBuff();
-    }
-
-    @Override
-    public int makeDefense()
-    {
-        return Utils.makeRoll(upperBound, lowerBound) + super.getDefenseBuff();
-    }
-    
-    @Override
-    public boolean hasTurn() {
-        return numTurnsLeft>=1;
-    }
-
-    @Override
-    public void resetTurn() {
-        numTurnsLeft = this.numTurnsPerRound;
-    }
-
-    @Override
-    public void takeTurn() {
-        numTurnsLeft--;
-    }
-
-    @Override
-    public boolean isStunned() {
-        return isStunned;
-    }
-
-    @Override
-    public void stunMe() {
-        isStunned = true;
-    }
-
-    @Override
-    public void unStunMe() {
-        isStunned = false;
+        init();
     }
 
     @Override
@@ -118,16 +82,30 @@ public class Wizard extends AbstractPlaceable implements Unit{
         return "Wizard";
     }
     
-    @Override
-    public boolean isUnit()
+    public void addSummon(Summonable s)
     {
-        return true;
+        this.mySummons.add(s);
+    }
+    
+    public void removeSummon(Summonable s)
+    {
+        this.mySummons.remove(s);
+    }
+    
+    public ArrayList<Summonable> getSummons()
+    {
+        return mySummons;
     }
     
     public int castSpell(String name, Placeable target, String type)
     {
         int manaSpent = myBook.castSpell(name, target, type);
-        this.numTurnsLeft = 0;
+        this.endTurn();
+        System.out.println("You have "+myBook.getSpellPoints()+" Mana remaining.");
+        if (manaSpent != 0)
+        {
+            System.out.println("Spell cast successfully!");
+        }
         return manaSpent;
     }
     
@@ -135,31 +113,46 @@ public class Wizard extends AbstractPlaceable implements Unit{
     {
         return myBook;
     }
-
     @Override
     public void levelUp() {
-        super.levelUp(1);
-        myBook.levelUp();
-        upperBound++;
+        
+        myBook.levelUp(myLevel);
+        super.levelUp(1, 1);
+        refreshMe();
+    }
+    
+    @Override
+    public void refreshMe()
+    {
+        super.refreshMe();
+        myBook.restoreMana();
+        mySummons = new ArrayList<>();
     }
     
     public class SpellBook implements Serializable
     {
-        private int spellPoints;
-        private int spellPointMax;
+        private int manaRemaining;
+        private int manaMax;
         private int spellStrength;
+        private final Wizard owner;
         
         
-        public SpellBook()
+        public SpellBook(Wizard owner)
         {
-            spellPointMax = 20;
-            spellPoints = spellPointMax;
+            manaMax = 20;
+            manaRemaining = manaMax;
             spellStrength = 2;
+            this.owner = owner;
         }
         
         public int getSpellPointMax()
         {
-            return spellPointMax;
+            return manaMax;
+        }
+        
+        public int getSpellPoints()
+        {
+            return manaRemaining;
         }
         
         public int castSpell(String spell, Placeable target,String type)
@@ -176,24 +169,30 @@ public class Wizard extends AbstractPlaceable implements Unit{
                 case "debuff":
                     pointsSpent = debuff(target,type);
                     break;
-                case "attack":
-                    pointsSpent = attack(target,type);
+                case "heal":
+                    pointsSpent = heal((AbstractPlaceable)target,type);
+                    break;
+                case "summon":
+                    pointsSpent = summon(type);
+                    break;
+                case "haste":
+                    pointsSpent = haste(target);
                     break;
                 default:
                     System.out.println("Invalid Spell");
                     pointsSpent = 0;
                     break;
             }
-            spellPoints -= pointsSpent;
+            manaRemaining -= pointsSpent;
             return pointsSpent;
         }
         
         public int stun(Placeable target)
         {
             int cost = 2;
-            if (this.spellPoints<cost)
+            if (this.manaRemaining<cost)
             {
-                System.out.println("Not enough spell points");
+                System.out.println("Not enough Mana");
                 return 0;
             }
             if (!(target instanceof Unit))
@@ -209,23 +208,22 @@ public class Wizard extends AbstractPlaceable implements Unit{
         public int buff(Placeable target,String type)
         {
             int cost = 5;
-            if (this.spellPoints<cost)
+            if (this.manaRemaining<cost)
             {
-                System.out.println("Not enough spell points");
+                System.out.println("Not enough Mana");
                 return 0;
             }
             if (!(target instanceof Unit))
             {
                 System.out.println("Must target unit");
             }
-            AbstractPlaceable spellTarget = (AbstractPlaceable)target;
+            AbstractPlaceableUnit spellTarget = (AbstractPlaceableUnit)target;
             switch(type)
             {
-                /*
+                
                 case "attack":
                     spellTarget.setAttackBuff(this.spellStrength);
                     break;
-                */
                 case "damage":
                     spellTarget.setDamageBuff(this.spellStrength);
                     break;
@@ -239,38 +237,25 @@ public class Wizard extends AbstractPlaceable implements Unit{
             return cost;
         }
         
-        public int attack(Placeable target,String type)
+        public int heal(AbstractPlaceable target,String type)
         {
             int convert = Integer.parseInt(type);
-            if (this.spellPoints<convert)
+            if (this.manaRemaining<convert)
             {
-                System.out.println("Not enough spell points");
+                System.out.println("Not enough Mana");
                 return 0;
             }
-            int damage = convert*spellStrength;
-            target.takeDamage(damage);
-            if (target.isDead())
-            {
-                Board b = Storage.getBoard();
-                b.removeUnit(target);
-                for (User u : b.getPlayers())
-                {
-                    if (u.belongsToMe((AbstractPlaceable)target))
-                    {
-                        u.getControlGroup().remove((Unit)target);
-                    }
-                }
-                target.setPosition(-1, -1);
-            }
+            int healPower = convert*spellStrength;
+            target.heal(healPower);
             return convert;
         }
         
         public int debuff(Placeable target, String type)
         {
             int cost = 5;
-            if (this.spellPoints<cost)
+            if (this.manaRemaining<cost)
             {
-                System.out.println("Not enough mana");
+                System.out.println("Not enough Mana");
                 return 0;
             }
             if (!(target instanceof Unit))
@@ -278,7 +263,7 @@ public class Wizard extends AbstractPlaceable implements Unit{
                 System.out.println("You must target a unit");
                 return 0;
             }
-            AbstractPlaceable spellTarget = (AbstractPlaceable)target;
+            AbstractPlaceableUnit spellTarget = (AbstractPlaceableUnit)target;
             switch(type.toLowerCase())
             {
                 case "attack":
@@ -299,19 +284,170 @@ public class Wizard extends AbstractPlaceable implements Unit{
         
         public void restoreMana()
         {
-            this.spellPoints = this.spellPointMax;
+            this.manaRemaining = this.manaMax;
         }
         
         public void restoreMana(int amount)
         {
-            this.spellPoints+=amount;
+            this.manaRemaining+=amount;
+            if (this.manaRemaining > this.manaMax)
+            {
+                this.manaRemaining = this.manaMax;
+            }
         }
         
-        public void levelUp()
+        public void levelUp(int myLevel)
         {
-            this.spellPointMax =+ 2;
-            this.spellPoints = this.spellPointMax;
+            this.manaMax =+ 2;
+            this.manaRemaining = this.manaMax;
             this.spellStrength =+ 1;
+        }
+        
+        public int summon(String type)
+        {
+            String summon;
+            String direction;
+            if (!type.contains(","))
+            {
+                System.out.println("Spell failed");
+                return 0;
+            }
+            else
+            {
+                summon = type.substring(0, type.indexOf(","));
+                direction = type.substring(type.indexOf(",")+1);
+            }
+            int pointsSpent = 0;
+            Board b = Storage.getBoard();
+            int row = owner.getRow();
+            int col = owner.getCol();
+            System.out.println("Attempting to summon: "+summon);
+            System.out.println("Attempting to summon towards: "+direction);
+            switch (summon)
+            {
+                case "wall":
+                    int cost = 3;
+                    if (this.manaRemaining<cost)
+                    {
+                        System.out.println("You don't have enough spell points");
+                        return 0;
+                    }
+                    pointsSpent = cost;
+                        WizardWall wall = new WizardWall(owner.getUID(), spellStrength,-1,-1);
+                        WizardWall wall2 = new WizardWall(owner.getUID(),spellStrength,-1,-1);
+                        WizardWall wall3 = new WizardWall(owner.getUID(),spellStrength,-1,-1);
+                        owner.mySummons.add(wall);
+                        owner.mySummons.add(wall2);
+                        owner.mySummons.add(wall3);
+                        System.out.println("Summoned wall with "+wall.getMaxHP()+" HP");
+                        {
+                            switch(direction)
+                            {
+                                case "w": //North
+                                    row--;
+                                    wall.setPosition(row, col-1);
+                                    wall2.setPosition(row, col);
+                                    wall3.setPosition(row, col+1);
+                                    if (b.isEmptySpace(row, col-1))
+                                    {
+                                        b.placePlaceable(row, col-1, wall);
+                                    }
+                                    if (b.isEmptySpace(row,col))
+                                    {
+                                        b.placePlaceable(row, col, wall2);
+                                    }
+                                    if (b.isEmptySpace(row, col+1));
+                                    {
+                                        b.placePlaceable(row, col+1, wall3);
+                                    }
+                                    break;
+                                case "d": //East
+                                    col++;
+                                    wall.setPosition(row-1, col);
+                                    wall2.setPosition(row, col);
+                                    wall3.setPosition(row+1, col);
+                                    if (b.isEmptySpace(row-1, col))
+                                    {
+                                        b.placePlaceable(row-1, col, wall);
+                                    }
+                                    if (b.isEmptySpace(row,col))
+                                    {
+                                        b.placePlaceable(row, col, wall2);
+                                    }
+                                    if (b.isEmptySpace(row+1, col));
+                                    {
+                                        b.placePlaceable(row+1, col, wall3);
+                                    }
+                                    break;
+                                case "s": //South
+                                    row++;
+                                    wall.setPosition(row,col-1);
+                                    wall2.setPosition(row,col);
+                                    wall3.setPosition(row, col+1);
+                                    if (b.isEmptySpace(row, col-1))
+                                    {
+                                        b.placePlaceable(row, col-1, wall);
+                                    }
+                                    if (b.isEmptySpace(row,col))
+                                    {
+                                        b.placePlaceable(row, col, wall2);
+                                    }
+                                    if (b.isEmptySpace(row, col+1));
+                                    {
+                                        b.placePlaceable(row, col+1, wall3);
+                                    }
+                                    break;
+                                case "a": //West
+                                    col--;
+                                    wall.setPosition(row-1, col);
+                                    wall2.setPosition(row, col);
+                                    wall3.setPosition(row+1, col);
+                                    if (b.isEmptySpace(row-1, col))
+                                    {
+                                        b.placePlaceable(row-1, col, wall);
+                                    }
+                                    if (b.isEmptySpace(row,col))
+                                    {
+                                        b.placePlaceable(row, col, wall2);
+                                    }
+                                    if (b.isEmptySpace(row+1, col));
+                                    {
+                                        b.placePlaceable(row+1, col, wall3);
+                                    }
+                                    break;
+                            }
+                        }
+                    break;
+                case "":
+                    break;
+                default:
+                    break;
+            }
+            return pointsSpent;
+        }
+        
+        public int haste(Placeable target)
+        {
+            int pointsSpent;
+            int cost = 3;
+            if (this.manaRemaining<cost)
+            {
+                System.out.println("You don't have enough spell points.");
+                return 0;
+            }
+            pointsSpent = cost;
+            if (target instanceof Unit)
+            {
+                System.out.println("Hasting " + target.getName());
+                Unit u = (Unit)target;
+                u.hasteMe(this.spellStrength);
+            }
+            else
+            {
+                System.out.println("Error casting haste");
+                return 0;
+            }
+            return pointsSpent;
         }
     }
 }

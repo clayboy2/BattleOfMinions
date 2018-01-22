@@ -33,10 +33,7 @@ public abstract class AbstractPlaceable implements Placeable,Serializable{
     private int myCol;
     private final char token;
     private final int myUID;
-    private int defenseBuff;
-    private int attackBuff;
-    private int damageBuff;
-    private int myLevel;
+    protected int myLevel;
     
     //This is the 'default' constructor.
     public AbstractPlaceable(String name, int maxHP,char token)
@@ -156,6 +153,7 @@ public abstract class AbstractPlaceable implements Placeable,Serializable{
     
     
     //Heals this placeable by an amount. Will not exceed max hp
+    @Override
     public void heal(int amount)
     {
         currHP =+ amount;
@@ -196,45 +194,20 @@ public abstract class AbstractPlaceable implements Placeable,Serializable{
     {
         return this.myUID;
     }
-    
-    public void setDamageBuff(int amount)
-    {
-        this.damageBuff = amount;
-    }
-    
-    public void setAttackBuff(int amount)
-    {
-        this.attackBuff = amount;
-    }
-    
-    public void setDefenseBuff(int amount)
-    {
-        this.defenseBuff = amount;
-    }
-    
-    public int getDamageBuff()
-    {
-        return damageBuff;
-    }
-    
-    public int getAttackBuff()
-    {
-        return attackBuff;
-    }
-    
-    public int getDefenseBuff()
-    {
-        return defenseBuff;
-    }
-    
-    public void levelUp(int hpBump)
+        
+    public void levelUp(int hpBump,int levelsGained)
     {
         this.maxHP+=hpBump;
-        myLevel++;
+        myLevel+=levelsGained;
     }
     
     public int getLevel()
     {
         return myLevel;
+    }
+    
+    public void refreshMe()
+    {
+        currHP = maxHP;
     }
 }

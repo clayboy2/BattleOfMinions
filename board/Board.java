@@ -36,7 +36,7 @@ public class Board implements Serializable{
         this.numCols = cols;
         this.numRows = rows;
         this.players = players;
-        initBoard(rows,cols);
+        initBoard(rows-1,cols-1);
     }
     
     private void initBoard(int rows, int cols)
@@ -87,6 +87,15 @@ public class Board implements Serializable{
             return false;
         }
         gameBoard[row][col] = p;
+        p.setPosition(row, col);
+        return true;
+    }
+    
+    public boolean movePlaceable(Placeable p, int row, int col)
+    {
+        gameBoard[p.getRow()][p.getCol()] = new EmptySpace();
+        gameBoard[row][col] = p;
+        p.setPosition(row, col);
         return true;
     }
     
@@ -118,5 +127,10 @@ public class Board implements Serializable{
     public User getLastManStanding()
     {
         return players.get(0);
+    }
+    
+    public void addPlayer(User u)
+    {
+        this.players.add(u);
     }
 }

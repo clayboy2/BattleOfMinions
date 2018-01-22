@@ -15,10 +15,62 @@
  */
 package utils;
 
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * This class handles all of the File IO that needs to be done.
  * @author Austen Clay
  */
 public class FileIO {
     
+    //Saves the users in a 'safe' way
+    public static void writeUsers(ArrayList<User> users)
+    {
+        writeData(users, new File("resources/users.bin"), false);
+    }
+    
+    public static ArrayList<User> readUsers()
+    {
+        return (ArrayList<User>) readData(new File("resources/users.bin"));
+    }
+    
+    public static void writeData(Object o, File f,boolean append)
+    {
+        try
+        {
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(f));
+            out.writeObject(o);
+        }
+        catch(IOException e)
+        {
+            System.out.println("Error writing Data");
+            e.printStackTrace();
+        }
+    }
+    
+    public static Object readData(File f)
+    {
+        Object o;
+        try
+        {
+            ObjectInputStream in = new ObjectInputStream(new FileInputStream(f));
+            o = in.readObject();
+        }
+        catch(IOException | ClassNotFoundException e) 
+        {
+            System.out.println("Exception occoured");
+            return null;
+        }
+        return o;
+    }
 }

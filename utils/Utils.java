@@ -15,10 +15,20 @@
  */
 package utils;
 
+import actors.AbstractPlaceable;
+import actors.Archer;
 import actors.Peasant;
-import actors.Placeable;
 import actors.Unit;
+import actors.Warrior;
+import actors.Wizard;
+import actors.subclassses.Samurai;
 import board.Board;
+import java.io.EOFException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -36,13 +46,8 @@ public class Utils {
     //Makes a roll with the specified upper bound
     public static int makeRoll(int upperBound,int lowerBound)
     {
-        int toReturn = 0;
-        for (int i = 0;i<upperBound;i++)
-        {
-            if ((int)((Math.random()*4)+1)==1)
-                toReturn++;
-        }
-        return toReturn + lowerBound;
+        int roll = (int)(Math.random()*upperBound+1-lowerBound)+lowerBound;
+        return roll;
     }
     
     //Randomly places units on the board
@@ -131,5 +136,165 @@ public class Utils {
             }
         }
         return true;
+    }
+    
+    public static void fileCheck() {
+        File resourceFolder = new File("resources");
+        if (!resourceFolder.exists()) {
+            resourceFolder.mkdir();
+        }
+        File userList = new File("resources/users.bin");
+        File idCounter = new File("resources/id.bin");
+        File replays = new File("resources/replay.bin");
+        try {
+            if (!idCounter.exists()) {
+                idCounter.createNewFile();
+                ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(idCounter));
+                ArrayList<Integer> id = new ArrayList<>();
+                id.add(0);
+                out.writeObject(id);
+                out.close();
+            }
+            if (!userList.exists()) {
+                ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(userList));
+                ArrayList<User> users = new ArrayList<>();
+                users.add(new User());
+                out.writeObject(users);
+                out.close();
+            }
+            if (!replays.exists())
+            {
+                ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(replays));
+                ArrayList<Replay> rp = new ArrayList<>();
+                out.writeObject(rp);
+            }
+        } catch (EOFException e) {
+            //Ignore
+        } catch (IOException e) {
+
+        }
+    }
+    
+    public static void resetFiles()
+    {
+        File userList = new File("resources/users.bin");
+        File idCounter = new File("resources/id.bin");
+        File replays = new File("resources/replay.bin");
+        try
+        {
+            ArrayList<User> users = new ArrayList<>();
+            ArrayList<Replay> replayList = new ArrayList<>();
+            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(userList));
+            out.writeObject(users);
+            out.close();
+            out = new ObjectOutputStream(new FileOutputStream(idCounter));
+            ArrayList<Integer> globalID = new ArrayList<>();
+            globalID.add(0);
+            out.writeObject(globalID);
+            out.close();
+            out = new ObjectOutputStream(new FileOutputStream(replays));
+            out.writeObject(replayList);
+            out.close();
+            System.out.println("Success");
+        }
+        catch(IOException e)
+        {
+            System.out.println("Error resetting files");
+        }
+    }
+    
+    public static class Replay implements Serializable
+    {
+        //First index is for each game step. The next two Fields are for row and column, respectivly
+        private final ArrayList<char[][]> gameSteps;
+        private int uid;
+        
+        public Replay()
+        {
+            gameSteps = new ArrayList<>();
+        }
+        
+        public void saveStep(Board b)
+        {
+            char[][] snapshot = new char[b.getRows()][b.getCols()];
+            for (int row = 0; row<b.getRows()-1; row++)
+            {
+                for (int col = 0; col<b.getCols()-1;col++)
+                {
+                    snapshot[row][col] = b.getTokenAt(row, col);
+                }
+            }
+            gameSteps.add(snapshot);
+        }
+        
+        public void saveReplay()
+        {
+            ArrayList<Replay> replays = (ArrayList<Replay>)FileIO.readData(new File("resources/replay.bin"));
+            replays.add(this);
+            FileIO.writeData(replays,new File("resources/replay.bin"),false);
+        }
+    }
+    
+    public static class UnitUpgrader
+    {
+        //Displays Upgrades
+        public static ArrayList<String> upgradeOptions(Unit toUpgrade)
+        {
+            ArrayList<String> toReturn = new ArrayList<>();
+            switch(toUpgrade.getUnitType())
+            {
+                case "Peasant":
+                    toReturn.add("Warrior");
+                    toReturn.add("Wizard");
+                    toReturn.add("Archer");
+                    break;
+                case "Warrior":
+                    if (((AbstractPlaceable)toUpgrade).getLevel()>=5)
+                    {
+                        toReturn.add("Samurai");
+                    }
+                    else
+                    {
+                        toReturn.add("Can't Upgrade");
+                    }
+                    break;
+                default:
+                    toReturn.add("Can't Upgrade");
+                    break;
+            }
+            return toReturn;
+        }
+        
+        public static Unit upgrade(Unit target, String upgradeTo)
+        {
+            Unit u = target;
+            ArrayList<String> possibleUpgrades = upgradeOptions(target);
+            if (possibleUpgrades.contains("Can't Upgrade"))
+            {
+                return target;
+            }
+            if (!possibleUpgrades.contains(upgradeTo))
+            {
+                return target;
+            }
+            switch(upgradeTo)
+            {
+                case "Samurai":
+                    u = new Samurai(target.getUID(), target.getName());
+                    break;
+                case "Warrior":
+                    u = new Warrior(target.getUID(), target.getName());
+                    break;
+                case "Wizard":
+                    u = new Wizard(target.getUID(), target.getName());
+                    break;
+                case "Archer":
+                    u = new Archer(target.getUID(), target.getName());
+                    break;
+                default:
+                    break;
+            }
+            return u;
+        }
     }
 }

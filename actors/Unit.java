@@ -15,6 +15,7 @@
  */
 package actors;
 
+
 /**
  * This interface extends the placeable interface, and represents a unit
  * @author Austen Clay
@@ -32,5 +33,10 @@ public interface Unit extends Placeable{
     public String getUnitType();
     public int getCurrHP();
     public void levelUp();
+    public int getMaxHP();
+    public void hasteMe(int amount);
+    public String[] getBuffInfo();
+    public void refreshMe();
+    
     
 }

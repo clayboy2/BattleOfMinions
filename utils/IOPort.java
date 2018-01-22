@@ -29,61 +29,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Used for File IO, and eventually Network IO
+ * Used for miscellaneous, and eventually Network IO
  * @author austen
  */
 public class IOPort {
     
-    //Saves a set of users. This is a 'safe' method
-    public static void writeUsers(ArrayList<User> users)
-    {
-        try
-        {
-            ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(new File("resources/users.bin")));
-            ArrayList<User> existing = readUsers();
-            existing.removeAll(users);
-            existing.addAll(users);
-            out.writeObject(existing);
-        }
-        catch (NotSerializableException e)
-        {
-            System.out.println("Something isn't serializable");
-        }
-        catch (EOFException e)
-        {
-            //Nothing to do here. 
-        }
-        catch (IOException e)
-        {
-            System.out.println("Something went wrong writing users.");
-        }
-    }
-    
-    public static ArrayList<User> readUsers()
-    {
-        ArrayList<User> toReturn = new ArrayList<>();
-        try
-        {
-            ObjectInputStream in = new ObjectInputStream(new FileInputStream(new File("resources/users.bin")));
-            toReturn = (ArrayList<User>)in.readObject();
-        }
-        catch (EOFException e)
-        {
-            //Do nothing
-        }
-        catch(IOException e)
-        {
-            System.out.println("IOException thrown");
-        }
-        catch (ClassNotFoundException e)
-        {
-            System.out.println("Class not found");
-        }
-        return toReturn;
-    }
     
     //Gets the global ID count, and increments it by one
-    public static int getGlobalID() 
+    public static int getGlobalID()
     {
         int toReturn = -1;
         try

@@ -15,99 +15,39 @@
  */
 package actors;
 
+import utils.Dice;
 import utils.Utils;
 
 /**
  * This class represents the most basic battle unit. 
  * @author Austen Clay
  */
-public class Peasant extends AbstractPlaceable implements Unit{
-    private boolean hasTurn;
-    private boolean isStunned;
+public class Peasant extends AbstractPlaceableUnit{
+    Dice defaultDice;
     //Default Constructor
+    private void init()
+    {
+        defaultDice = new Dice(1,4);
+        super.init(1,defaultDice,defaultDice,defaultDice);
+    }
+    
     public Peasant()
     {
         super("Bob Farmer", 5,'P');
-        hasTurn = true;
-        isStunned = false;
+        init();
     }
     
     public Peasant(int UID)
     {
         super("Bob Farmer", 5, 'P',UID);
+        init();
     }
     
     //Named peasant
     public Peasant(String name)
     {
         super(name, 5, 'P');
-        hasTurn = true;
-        isStunned = false;
-    }
-    
-    //Stuns this unit
-    @Override
-    public void stunMe()
-    {
-        isStunned = true;
-    }
-    
-    //Signals if I am stunned or not
-    @Override
-    public boolean isStunned()
-    {
-        return isStunned;
-    }
-    
-    //Unstuns this unit
-    @Override
-    public void unStunMe()
-    {
-        isStunned = false;
-    }
-    
-    //Signals that this is indeed, a unit
-    @Override
-    public boolean isUnit()
-    {
-        return true;
-    }
-
-    //Does damage
-    @Override
-    public int doDamage() {
-        return Utils.makeRoll(3,0) + 1 + super.getDefenseBuff();
-    }
-    
-    //Makes a defense check
-    @Override
-    public int makeDefense()
-    {
-        return Utils.makeRoll(3,0) + super.getDefenseBuff();
-    }
-    
-    //Makes an attack roll
-    @Override
-    public int makeAttack()
-    {
-        return Utils.makeRoll(3,0)+super.getAttackBuff();
-    }
-
-    @Override
-    public boolean hasTurn() {
-        return hasTurn;
-    }
-    
-    @Override
-    public void takeTurn()
-    {
-        hasTurn = false;
-    }
-    
-    @Override
-    public void resetTurn()
-    {
-        hasTurn = true;
+        init();
     }
 
     @Override

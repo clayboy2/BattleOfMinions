@@ -15,96 +15,95 @@
  */
 package actors;
 
+import java.util.ArrayList;
+import utils.Dice;
 import utils.Utils;
 
 /**
  *
  * @author austen
  */
-public class Warrior extends AbstractPlaceable implements Unit{
-    private boolean hasTurn;
-    private boolean isStunned;
-    private int upperBound;
-    private int lowerBound;
-
+public class Warrior extends AbstractPlaceableUnit{
+    private int staminaMax;
+    private int stamina;
+    ArrayList<String> attacksAvailable;
+    
+    protected void init(int turnsPerRound, Dice attackDice, Dice defenseDice, Dice damageDice, int staminaMax)
+    {
+        super.init(turnsPerRound, attackDice, defenseDice, damageDice);
+        this.staminaMax = staminaMax;
+        this.attacksAvailable = new ArrayList<>();
+        attacksAvailable.add("power attack");
+    }
+    
+    private void init()
+    {
+        Dice attackDice = new Dice(100,100);
+        Dice defenseDice = new Dice(1,8);
+        Dice damageDice = new Dice(1,6);
+        this.init(2,attackDice,defenseDice,damageDice,10);
+    }
+    
     public Warrior()
     {
         super("Dave",10,'W');
-        upperBound = 6;
-        lowerBound = 0;
+        init();
     }
     public Warrior(String name, int maxHP) {
         super(name, maxHP, 'W');
-        upperBound = 6;
-        lowerBound = 0;
+        init();
     }
     
     public Warrior(String name)
     {
         super(name, 10,'W');
-        upperBound = 6;
-        lowerBound = 0;
+        init();
+    }
+    
+    public Warrior(int UID, String name)
+    {
+        super(name,10,'W',UID);
+        init();
+    }
+    
+    public Warrior(String name, int maxHP, char token)
+    {
+        super(name,maxHP,token);
+        init();
     }
     
     public Warrior(String name, int maxHP, int UID)
     {
         super(name,maxHP,'W',UID);
-        upperBound = 6;
-        lowerBound = 0;
+        init();
     }
     
-    @Override
-    public int doDamage() {
-        return Utils.makeRoll(upperBound, lowerBound) + 1 +super.getDamageBuff();
+    public Warrior(String name, int maxHP, char token, int UID)
+    {
+        super(name,maxHP,token,UID);
+        init();
     }
-
+    
+    public int getStamina()
+    {
+        return stamina;
+    }
+    
+    public void restoreStamina()
+    {
+        this.stamina = this.staminaMax;
+    }
+    
+    public void spendStamina(int amt)
+    {
+        this.stamina-=amt;
+    }
+    
     @Override
     public int makeAttack() {
         return 100+getAttackBuff();
     }
     
-    @Override
-    public int makeDefense()
-    {
-        return Utils.makeRoll(upperBound,lowerBound)+super.getDefenseBuff();
-    }
-    
-    @Override
-    public boolean hasTurn() {
-        return hasTurn;
-    }
-
-    @Override
-    public void resetTurn() {
-        hasTurn = true;
-    }
-
-    @Override
-    public void takeTurn() {
-        hasTurn = false;
-    }
-
-    @Override
-    public boolean isStunned() {
-        return isStunned;
-    }
-
-    @Override
-    public void stunMe() {
-        isStunned = true;
-    }
-
-    @Override
-    public void unStunMe() {
-        isStunned = false;
-    }
-    
-    @Override
-    public boolean isUnit()
-    {
-        return true;
-    }
-
     @Override
     public String getUnitType() {
         return "Warrior";
@@ -112,8 +111,30 @@ public class Warrior extends AbstractPlaceable implements Unit{
 
     @Override
     public void levelUp() {
-        super.levelUp(3);
-        upperBound++;
-        lowerBound++;
+        super.levelUp(0, 1);
+    }
+    
+    public boolean hasAttack(String attackName)
+    {
+        for (String s : attacksAvailable)
+        {
+            if (s.equals(attackName))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public void addAttack(String attackName)
+    {
+        attacksAvailable.add(attackName);
+    }
+    
+    @Override
+    public void refreshMe()
+    {
+        super.refreshMe();
+        stamina = staminaMax;
     }
 }

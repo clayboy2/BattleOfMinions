@@ -37,4 +37,7 @@ public interface Placeable extends Serializable{
     @Override
     public int hashCode();
     public int getUID();
+    public void heal(int amount);
+    @Override
+    public boolean equals(Object o);
 }

@@ -15,80 +15,86 @@
  */
 package actors;
 
-import utils.Utils;
+import utils.Dice;
 
 /**
  *
  * @author austen
  */
-public class Archer extends AbstractPlaceable implements Unit{
-    private int turnsLeft;
-    private int turnsPerRound;
-    private boolean isStunned;
+public class Archer extends AbstractPlaceableUnit{
     private boolean didCrit;
-    private int upperBound;
-    private int lowerBound;
+    @Override
+    protected void init(int turnsPerRound,Dice attackDice, Dice defenseDice, Dice damageDice)
+    {
+        super.init(2,attackDice, defenseDice, damageDice);
+    }
+    
+    private void init()
+    {
+        Dice attack = new Dice(1,10);
+        Dice defense = new Dice(1,6);
+        Dice damage = new Dice(1,8);
+        super.init(2,attack,defense,damage);
+    }
     
     public Archer()
     {
         super("Legolas",8,'A');
-        this.turnsLeft = 2;
-        this.turnsPerRound = 2;
-        this.isStunned = false;
-        this.didCrit = false;
-        upperBound = 6;
-        lowerBound = 0;
+        init();
     }
     
     public Archer(String name)
     {
         super(name,8,'A');
-        this.turnsLeft = 2;
-        this.turnsPerRound = 2;
-        this.isStunned = false;
-        this.didCrit = false;
-        upperBound = 8;
-        lowerBound = 0;
+        init();
     }
     
     public Archer(String name, int maxHP)
     {
         super(name,maxHP,'A');
-        this.turnsLeft = 2;
-        this.turnsPerRound = 2;
-        this.isStunned = false;
-        this.didCrit = false;
-        upperBound = 8;
-        lowerBound = 0;
+        init();
+    }
+    
+    public Archer(int UID, String name)
+    {
+        super(name,8,'A',UID);
+        init();
     }
     
     public Archer(String name, int maxHP, int UID)
     {
         super(name,maxHP,'A',UID);
-        this.turnsLeft = 2;
-        this.turnsPerRound = 2;
-        this.isStunned = false;
-        this.didCrit = false;
-        upperBound = 8;
-        lowerBound = 0;
+        init();
+    }
+    
+    public Archer(String name, int maxHP, char token)
+    {
+        super(name,maxHP,token);
+    }
+    
+    public Archer(String name, int maxHP, char token, int uid)
+    {
+        super(name,maxHP,token,uid);
+        init();
     }
     
     @Override
     public int doDamage() {
-        int roll = Utils.makeRoll(upperBound,lowerBound)+1 + super.getDamageBuff();
+        int roll = super.doDamage();
         if (didCrit)
         {
-            didCrit = false;
-            roll+=(Utils.makeRoll(upperBound,lowerBound)+1);
+            roll+=super.doDamage();
         }
+        didCrit = false;
         return roll;
     }
 
     @Override
     public int makeAttack() {
-        int roll = Utils.makeRoll(upperBound,lowerBound);
-        if (roll >=upperBound)
+        int roll = super.makeAttack();
+        if (roll >= super.getMaxRoll("attack"))
         {
+            System.out.println(super.getName() + " got a critical hit!");
             this.didCrit = true;
             return 100;
         }
@@ -99,42 +105,6 @@ public class Archer extends AbstractPlaceable implements Unit{
         return roll;
     }
     
-    @Override
-    public int makeDefense()
-    {
-        return Utils.makeRoll(upperBound,lowerBound)+super.getDefenseBuff();
-    }
-
-    @Override
-    public boolean hasTurn() {
-        return turnsLeft>0;
-    }
-
-    @Override
-    public void resetTurn() {
-        this.turnsLeft = this.turnsPerRound;
-    }
-
-    @Override
-    public void takeTurn() {
-        this.turnsLeft--;
-    }
-
-    @Override
-    public boolean isStunned() {
-        return isStunned;
-    }
-
-    @Override
-    public void stunMe() {
-        this.isStunned = true;
-    }
-
-    @Override
-    public void unStunMe() {
-        this.isStunned = false;
-    }
-
     @Override
     public String getUnitType() {
         return "Archer";
@@ -149,8 +119,22 @@ public class Archer extends AbstractPlaceable implements Unit{
     @Override
     public void levelUp()
     {
-        super.levelUp(2);
-        upperBound+=2;
-        lowerBound+=1;
+        if (myLevel%3==0)
+        {
+            super.levelUp(1, 0, 0, 0, 0);
+        }
+        if (myLevel%2==0)
+        {
+            super.levelUp(0,0,1,0,0);
+        }
+        if ((myLevel+1)%2==0)
+        {
+            super.levelUp(0,0,0,1,0);
+        }
+        if (myLevel%5==0)
+        {
+            super.levelUp(0,5,0,0,0);
+        }
+        super.levelUp(0, 2, 0, 0,1);
     }
 }

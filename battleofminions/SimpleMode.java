@@ -16,24 +16,22 @@
 package battleofminions;
 
 import actors.AbstractPlaceable;
-import actors.Archer;
-import actors.Peasant;
 import actors.Placeable;
 import actors.Unit;
+import actors.Warrior;
 import actors.Wizard;
+import actors.wizardmagic.Summonable;
 import board.Board;
 import java.util.ArrayList;
 import java.util.Scanner;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
-import static org.fusesource.jansi.Ansi.*;
-import static org.fusesource.jansi.Ansi.Color.*;
 import utils.Action;
-import utils.IOPort;
+import utils.FileIO;
 import utils.Storage;
 import utils.Storage.LastAttack;
-import utils.Utils;
 import utils.User;
+import utils.Utils.Replay;
 
 /**
  * The default method of playing the game
@@ -43,76 +41,16 @@ import utils.User;
 public class SimpleMode {
 
     public static ArrayList<Unit> friendlyFireKills;
+    private final Board b;
+    
+    public SimpleMode(Board b)
+    {
+        this.b = b;
+        friendlyFireKills = new ArrayList<>();
+    }
 
     //Runs the game with the given args
     public void runGame(ArrayList<User> users) {
-        friendlyFireKills = new ArrayList<>();
-        Board b = new Board(22, 22, users);
-        ArrayList<Integer> directionsUsed = new ArrayList<>();
-        for (User u : users) {
-            while (true) {
-                System.out.println(u.getName() + " is selecting units.");
-                boolean successful = true;
-                int direction = (int) (Math.random() * 4);
-                for (Integer i : directionsUsed) {
-                    if (direction == i) {
-                        successful = false;
-                        break;
-                    }
-                }
-                if (successful) {
-                    directionsUsed.add(direction);
-                    if (u.getBarracks().isEmpty()) {
-                        u.setControlGroup(Utils.randomPlacement(b, direction, (u.getName().equals("A.I. Opponent"))));
-                    } else {
-                        ArrayList<Unit> currentBarracks = u.getBarracks();
-                        ArrayList<Unit> controlGroup = new ArrayList<>();
-                        System.out.println("Use saved units?");
-                        Scanner keys = new Scanner(System.in);
-                        if (keys.nextLine().toLowerCase().equals("yes")) {
-                            if (currentBarracks.size() < 5) {
-                                System.out.println("Filling with Peasants...");
-                                while (currentBarracks.size() < 5) {
-                                    System.out.println("Enter a name: ");
-                                    Unit tempUnit = new Peasant(keys.nextLine());
-                                    currentBarracks.add(tempUnit);
-                                }
-                                u.setControlGroup(currentBarracks);
-                            } else if (currentBarracks.size() == 5) {
-                                for (Unit tempUnit : currentBarracks) {
-                                    controlGroup.add(tempUnit);
-                                }
-                                u.setControlGroup(controlGroup);
-                            } else {
-                                System.out.println("You have the following units: ");
-                                for (Unit currentUnit : currentBarracks) {
-                                    System.out.println(currentUnit.getName() + "|ID: " + currentUnit.hashCode() + "|Class: " + currentUnit.getUnitType());
-                                }
-                                while (controlGroup.size() < 5) {
-                                    System.out.println("Enter the ID of the Units to use:");
-                                    String choice = keys.nextLine();
-                                    int id = Integer.parseInt(choice);
-                                    for (Unit currentUnit : currentBarracks) {
-                                        if (currentUnit.hashCode() == id) {
-                                            controlGroup.add(currentUnit);
-                                        }
-                                    }
-                                }
-                                u.setControlGroup(controlGroup);
-                            }
-                            currentBarracks.removeAll(controlGroup);
-                            Utils.randomPlacement(b, u.getControlGroup(), direction);
-                        } else {
-                            u.setControlGroup(Utils.randomPlacement(b, direction, (u.getName().equals("A.I. Opponent"))));
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-        Storage.setBoard(b);
-        SimpleOutput out = new SimpleOutput();
-        out.textOutput(b, new Peasant());
         gameLoop(b);
     }
 
@@ -121,16 +59,46 @@ public class SimpleMode {
         Scanner keys = new Scanner(System.in);
         ArrayList<User> toRemove = new ArrayList<>();
         ArrayList<User> toSave = new ArrayList<>();
+        Replay replay = new Replay();
         while (true) {
+            Storage.setBoard(b);
+            replay.saveStep(b);
             SimpleOutput display = new SimpleOutput();
             for (User currentUser : b.getPlayers()) {
-                currentUser.startNewTurn();
+                currentUser.startNewTurn(); 
                 System.out.println("It is " + currentUser.getName() + "'s turn.");
                 for (Unit currentUnit : currentUser.getControlGroup()) {
+                    ArrayList<Unit> toView = new ArrayList<>();
+                    toView.add(currentUnit);
+                    BattleOfMinions.viewUnits(currentUser, toView);
+                    if (currentUnit instanceof Wizard)
+                    {
+                        Wizard w = (Wizard)currentUnit;
+                        ArrayList<Summonable> deadUnits = new ArrayList<>();
+                        for (Summonable mySummon : ((Wizard) currentUnit).getSummons())
+                        {
+                            mySummon.takeTurn();
+                            if (mySummon.shouldDie())
+                            {
+                                deadUnits.add(mySummon);
+                            }
+                            if (!mySummon.isStunned())
+                            {
+                                //Take a turn;
+                            }
+                        }
+                        w.getSummons().removeAll(deadUnits);
+                        for (Summonable s : deadUnits)
+                        {
+                            Placeable p = (Placeable)s;
+                            b.removeUnit(p);
+                        }
+                    }
                     System.out.println(currentUnit.getName()+" has "+currentUnit.getCurrHP()+" HP left.");
                     while (currentUnit.hasTurn()) {
                         if (currentUnit.isStunned())
                         {
+                            System.out.println(currentUnit.getName()+" has been stunned.");
                             currentUnit.unStunMe();
                             break;
                         }
@@ -139,6 +107,7 @@ public class SimpleMode {
                         int code = -1;
                         try {
                             switch (keys.nextLine().toLowerCase()) {
+                                case "":
                                 case "skip":
                                     while (currentUnit.hasTurn())
                                     {
@@ -182,10 +151,7 @@ public class SimpleMode {
                                         String type = keys.nextLine();
                                         for (User spellUser : b.getPlayers())
                                         {
-                                            for (Unit spellUnit : spellUser.getControlGroup())
-                                            {
-                                                System.out.println("Name: "+spellUnit.getName()+"| Class: "+spellUnit.getUnitType()+"| ID: "+spellUnit.hashCode());
-                                            }
+                                            BattleOfMinions.viewUnits(spellUser,spellUser.getControlGroup());
                                         }
                                         System.out.println("Select a target by ID: ");
                                         int targetID = Integer.parseInt(keys.nextLine());
@@ -213,10 +179,56 @@ public class SimpleMode {
                                         System.out.println(currentUnit.getName()+" has not mastered the arcane arts.");
                                     }
                                     break;
+                                case "power attack":
+                                    if (currentUnit instanceof Warrior)
+                                    {
+                                        System.out.println("Please enter the name of an attack:");
+                                        String attackName = keys.nextLine();
+                                        System.out.println("If your attack specifies damage, enter it now: ");
+                                        int damage = Integer.parseInt(keys.nextLine());
+                                        System.out.println("Enter an attack direction: ");
+                                        String input = keys.nextLine().toLowerCase();
+                                        if (input.equals(""))
+                                        {
+                                            System.out.println("Invalid input");
+                                            break;
+                                        }
+                                        int direction = input.charAt(0);
+                                        switch(direction)
+                                        {
+                                            case 'w':
+                                                direction = Action.NORTH;
+                                                break;
+                                            case 'a':
+                                                direction = Action.WEST;
+                                                break;
+                                            case 's':
+                                                direction = Action.SOUTH;
+                                                break;
+                                            case 'd':
+                                                direction = Action.EAST;
+                                                break;
+                                            default:
+                                                System.out.println("Invalid Direction");
+                                                break;
+                                        }
+                                        Action.SpecialAttacks.attackSelector(attackName, damage, (Warrior)currentUnit, direction, input);
+                                    }
+                                    else
+                                    {
+                                        System.out.println(currentUnit.getName()+" is too weak for that.");
+                                    }
+                                    break;
                                 default:
+                                    System.out.println("Invalid Selection");
                                     break;
                             }
-                        } catch (Exception e) {
+                        } 
+                        catch (IndexOutOfBoundsException e)
+                        {
+                            System.out.println("Error out of bounds");
+                        }
+                        catch (NumberFormatException e) {
                             code = -2;
                         }
                         switch (code) {
@@ -271,6 +283,12 @@ public class SimpleMode {
                     for (Unit levelMe : u.getControlGroup())
                     {
                         levelMe.levelUp();
+                        levelMe.refreshMe();
+                        if (levelMe instanceof Wizard)
+                        {
+                            Wizard w = (Wizard) levelMe;
+                            w.refreshMe();
+                        }
                     }
                 }
                 toSave.addAll(b.getPlayers());
@@ -281,7 +299,13 @@ public class SimpleMode {
         for (User u : toSave) {
             u.saveUnits();
         }
-        IOPort.writeUsers(toSave);
+        FileIO.writeUsers(toSave);
+        System.out.println("Save replay?");
+        if (keys.nextLine().toLowerCase().equals("yes"))
+        {
+            replay.saveReplay();
+        }
+        
     }
 
     //Inner class with input tools
@@ -297,8 +321,8 @@ public class SimpleMode {
             AnsiConsole.systemInstall();
             ArrayList<User> players = b.getPlayers();
             Placeable[][] gameBoard = b.getBoard();
-            for (int row = 0; row < b.getRows(); row++) {
-                for (int col = 0; col < b.getCols(); col++) {
+            for (int row = 0; row < b.getRows()-1; row++) {
+                for (int col = 0; col < b.getCols()-1; col++) {
                     if (gameBoard[row][col] instanceof Unit) {
                         char token = gameBoard[row][col].getToken();
                         if (gameBoard[row][col].equals(u)) {
