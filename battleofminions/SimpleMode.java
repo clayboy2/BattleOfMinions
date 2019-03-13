@@ -16,6 +16,7 @@
 package battleofminions;
 
 import actors.AbstractPlaceable;
+import actors.Archer;
 import actors.Placeable;
 import actors.Unit;
 import actors.Warrior;
@@ -120,7 +121,7 @@ public class SimpleMode {
                                     break;
                                 case "attack":
                                     System.out.println("Please enter wsad for attack");
-                                    if (currentUnit.getUnitType().equals("Archer"))
+                                    if (currentUnit instanceof Archer)
                                     {
                                         code = Action.rangedAttack(currentUnit, keys.nextLine().toLowerCase().charAt(0));
                                     }

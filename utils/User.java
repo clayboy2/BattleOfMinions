@@ -142,6 +142,7 @@ public class User implements Serializable{
         this.barracks = barracks;
     }
     
+    
     public void removeUnitBarracks(Unit u)
     {
         this.barracks.remove(u);

@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * A set of Utilites that the program runs with
+ * A set of utilites that the program runs with
  * @author ninja
  */
 public class Utils {
@@ -43,14 +43,14 @@ public class Utils {
     public static final int SOUTH = 2;
     public static final int WEST = 3;
     
-    //Makes a roll with the specified upper bound
+    //Makes a roll with the specified upper and lower bounds
     public static int makeRoll(int upperBound,int lowerBound)
     {
         int roll = (int)(Math.random()*upperBound+1-lowerBound)+lowerBound;
         return roll;
     }
     
-    //Randomly places units on the board
+    //Randomly places units from a temporary AI opponent
     public static ArrayList<Unit> randomPlacement(Board b, int direction, boolean isAI)
     {
         ArrayList<Unit> toReturn = new ArrayList<>();
@@ -99,6 +99,8 @@ public class Utils {
         }
         return toReturn;
     }
+    
+    //Randomly places a group of units on the game board in a specified cardinal direction
     public static boolean randomPlacement(Board b, ArrayList<Unit> unitsToPlace, int direction)
     {
         for (Unit u : unitsToPlace)
@@ -138,6 +140,7 @@ public class Utils {
         return true;
     }
     
+    //Checks for nessecary game files, and creates them if not found.
     public static void fileCheck() {
         File resourceFolder = new File("resources");
         if (!resourceFolder.exists()) {
@@ -175,6 +178,7 @@ public class Utils {
         }
     }
     
+    //Destroys all the game files and generates new defaults
     public static void resetFiles()
     {
         File userList = new File("resources/users.bin");
@@ -203,6 +207,7 @@ public class Utils {
         }
     }
     
+    //Test class replay for saving games. Unstable
     public static class Replay implements Serializable
     {
         //First index is for each game step. The next two Fields are for row and column, respectivly
@@ -235,9 +240,10 @@ public class Utils {
         }
     }
     
+    //Factory for unit upgrading
     public static class UnitUpgrader
     {
-        //Displays Upgrades
+        //Returns upgrade options for a given unit
         public static ArrayList<String> upgradeOptions(Unit toUpgrade)
         {
             ArrayList<String> toReturn = new ArrayList<>();
@@ -252,12 +258,18 @@ public class Utils {
                     if (((AbstractPlaceable)toUpgrade).getLevel()>=5)
                     {
                         toReturn.add("Samurai");
+                        toReturn.add("Berserker");
                     }
                     else
                     {
                         toReturn.add("Can't Upgrade");
                     }
                     break;
+                case "Archer":
+                    if (((AbstractPlaceable)toUpgrade).getLevel()>=5)
+                    {
+                        toReturn.add("Arbalist");
+                    }
                 default:
                     toReturn.add("Can't Upgrade");
                     break;
@@ -265,6 +277,7 @@ public class Utils {
             return toReturn;
         }
         
+        //Upgrades a unit to the specified type
         public static Unit upgrade(Unit target, String upgradeTo)
         {
             Unit u = target;

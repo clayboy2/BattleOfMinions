@@ -31,6 +31,7 @@ public class Samurai extends Warrior implements Unit{
         Dice defense = new Dice(1,10);
         Dice damage = new Dice(1,13);
         super.init(3, attack, defense, damage, 25);
+        super.addAttack("cleaving strike");
     }
     
     public Samurai()

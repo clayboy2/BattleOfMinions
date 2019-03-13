@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="gui.MainMenuController">
+   <children>
+      <BorderPane prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <bottom>
+            <HBox prefHeight="18.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Label text="Command:" />
+                  <Pane prefHeight="25.0" prefWidth="7.0" />
+                  <TextField fx:id="debugText" prefHeight="25.0" prefWidth="451.0" />
+                  <Button fx:id="debugSubmit" mnemonicParsing="false" prefHeight="25.0" prefWidth="84.0" text="Submit" />
+               </children>
+            </HBox>
+         </bottom>
+         <left>
+            <Pane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+         </left>
+         <right>
+            <Pane fx:id="startGame" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+         </right>
+         <top>
+            <Pane prefHeight="29.0" prefWidth="600.0" BorderPane.alignment="CENTER" />
+         </top>
+         <center>
+            <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
+               <children>
+                  <HBox prefHeight="69.0" prefWidth="200.0">
+                     <children>
+                        <Pane prefHeight="69.0" prefWidth="61.0" />
+                        <Button fx:id="playGame" mnemonicParsing="false" text="Play Game!" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="72.0" prefWidth="200.0">
+                     <children>
+                        <Pane prefHeight="69.0" prefWidth="61.0" />
+                        <Button fx:id="adminConsle" mnemonicParsing="false" text="Admin Interface" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="71.0" prefWidth="200.0">
+                     <children>
+                        <Pane prefHeight="69.0" prefWidth="61.0" />
+                        <Button mnemonicParsing="false" text="Coming Soon!" />
+                     </children>
+                  </HBox>
+                  <HBox prefHeight="63.0" prefWidth="200.0">
+                     <children>
+                        <Pane prefHeight="69.0" prefWidth="61.0" />
+                        <Button mnemonicParsing="false" text="Coming Soon!" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </center>
+      </BorderPane>
+   </children>
+</AnchorPane>

@@ -44,7 +44,7 @@ public class Wizard extends AbstractPlaceableUnit{
         Dice attack = new Dice(1,6);
         Dice defense = new Dice(1,6);
         Dice damage = new Dice(1,4);
-        this.init(myLevel, attack, defense, damage);
+        this.init(2, attack, defense, damage);
     }
     
     public Wizard()

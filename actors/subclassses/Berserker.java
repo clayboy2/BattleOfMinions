@@ -32,14 +32,14 @@ public class Berserker extends Warrior{
         Dice defenseDice = new Dice(1,12);
         Dice damageDice = new Dice(1,8);
         super.init(2, attackDice, defenseDice, damageDice, 30);
+        super.addAttack("cleaving strike");
+        super.addAttack("dash");
     }
     
     public Berserker()
     {
         super("Jerry",12,'B');
         init();
-        super.addAttack("cleaving strike");
-        super.addAttack("dash");
     }
     
     public Berserker(String name)
